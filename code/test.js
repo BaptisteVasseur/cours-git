@@ -1,158 +1,214 @@
-// Tests avec vérifications de sortie pour le convertisseur emoji
-const { convertTextToEmoji, wordToEmoji } = require('./main.js');
+const { convertTextToEmoji, wordToEmoji, EmojiConverter } = require('./main.js');
 
-console.log('=== Tests du convertisseur emoji ===\n');
+class TestRunner {
+    constructor() {
+        this.testsPassés = 0;
+        this.testsTotal = 0;
+        this.testSuites = [];
+    }
 
-// Fonction d'aide pour les tests
-function assertEquals(actual, expected, testName) {
-    if (actual === expected) {
-        console.log(`✅ ${testName} : RÉUSSI`);
-        return true;
-    } else {
-        console.log(`❌ ${testName} : ÉCHEC`);
-        console.log(`   Attendu: "${expected}"`);
-        console.log(`   Obtenu:  "${actual}"`);
-        return false;
+    assertEquals(actual, expected, testName) {
+        this.testsTotal++;
+        if (actual === expected) {
+            console.log(`✅ ${testName} : RÉUSSI`);
+            this.testsPassés++;
+            return true;
+        } else {
+            console.log(`❌ ${testName} : ÉCHEC`);
+            console.log(`   Attendu: "${expected}"`);
+            console.log(`   Obtenu:  "${actual}"`);
+            return false;
+        }
+    }
+
+    assertContains(text, word, testName) {
+        this.testsTotal++;
+        if (text.includes(word)) {
+            console.log(`✅ ${testName} : RÉUSSI`);
+            this.testsPassés++;
+            return true;
+        } else {
+            console.log(`❌ ${testName} : ÉCHEC`);
+            console.log(`   Le texte "${text}" ne contient pas "${word}"`);
+            return false;
+        }
+    }
+
+    assertThrows(fn, testName) {
+        this.testsTotal++;
+        try {
+            fn();
+            console.log(`❌ ${testName} : ÉCHEC - Aucune erreur levée`);
+            return false;
+        } catch (error) {
+            console.log(`✅ ${testName} : RÉUSSI`);
+            this.testsPassés++;
+            return true;
+        }
+    }
+
+    runTest(testFn, suiteName) {
+        console.log(`\n=== ${suiteName} ===`);
+        testFn.call(this);
+    }
+
+    runAllTests() {
+        console.log('=== Tests du convertisseur emoji ===\n');
+        
+        this.runTest(this.testConversionsBasiques, 'Tests de conversions basiques');
+        this.runTest(this.testCasseSensitive, 'Tests de sensibilité à la casse');
+        this.runTest(this.testDictionnaire, 'Tests du dictionnaire');
+        this.runTest(this.testHistoireComplete, 'Test histoire complète');
+        this.runTest(this.testGestionErreurs, 'Tests de gestion d\'erreurs');
+        this.runTest(this.testClasseEmojiConverter, 'Tests de la classe EmojiConverter');
+        
+        this.afficherResume();
+    }
+
+    afficherResume() {
+        console.log('\n=== RÉSUMÉ DES TESTS ===');
+        console.log(`Tests réussis: ${this.testsPassés}/${this.testsTotal}`);
+
+        if (this.testsPassés === this.testsTotal) {
+            console.log('🎉 TOUS LES TESTS SONT RÉUSSIS ! 🎉');
+        } else {
+            console.log('⚠️  Certains tests ont échoué. Vérifie le code.');
+        }
     }
 }
 
-function assertContains(text, word, testName) {
-    if (text.includes(word)) {
-        console.log(`✅ ${testName} : RÉUSSI`);
-        return true;
-    } else {
-        console.log(`❌ ${testName} : ÉCHEC`);
-        console.log(`   Le texte "${text}" ne contient pas "${word}"`);
-        return false;
-    }
-}
+TestRunner.prototype.testConversionsBasiques = function() {
+    this.assertEquals(
+        convertTextToEmoji("J'aime mon chat"),
+        "J'aime mon 🐱",
+        "Conversion chat"
+    );
 
-let testsPassés = 0;
-let testsTotal = 0;
+    this.assertEquals(
+        convertTextToEmoji("Le soleil brille et mon coeur bat"),
+        "Le ☀️ brille et mon ❤️ bat",
+        "Conversion multiple"
+    );
 
-// Test 1: Conversion basique
-testsTotal++;
-const test1 = "J'aime mon chat";
-const result1 = convertTextToEmoji(test1);
-const expected1 = "J'aime mon 🐱";
+    this.assertEquals(
+        convertTextToEmoji("Bonjour le monde"),
+        "Bonjour le monde",
+        "Aucune conversion"
+    );
 
-if (assertEquals(result1, expected1, "Test conversion chat")) {
-    testsPassés++;
-}
+    this.assertEquals(
+        convertTextToEmoji("J'ai du courage dans le coeur"),
+        "J'ai du courage dans le ❤️",
+        "Mots partiels"
+    );
 
-// Test 2: Plusieurs mots
-testsTotal++;
-const test2 = "Le soleil brille et mon coeur bat";
-const result2 = convertTextToEmoji(test2);
-const expected2 = "Le ☀️ brille et mon ❤️ bat";
+    this.assertEquals(
+        convertTextToEmoji("coeur amour chat chien soleil lune eau feu terre"),
+        "❤️ 💕 🐱 🐶 ☀️ 🌙 💧 🔥 🌍",
+        "Tous les emojis"
+    );
+};
 
-if (assertEquals(result2, expected2, "Test conversion multiple")) {
-    testsPassés++;
-}
+TestRunner.prototype.testCasseSensitive = function() {
+    this.assertEquals(
+        convertTextToEmoji("J'aime le SOLEIL"),
+        "J'aime le ☀️",
+        "Casse majuscule"
+    );
 
-// Test 3: Aucun mot à convertir
-testsTotal++;
-const test3 = "Bonjour le monde";
-const result3 = convertTextToEmoji(test3);
-const expected3 = "Bonjour le monde";
+    this.assertEquals(
+        convertTextToEmoji("Mon Chien est gentil"),
+        "Mon 🐶 est gentil",
+        "Casse mixte"
+    );
+};
 
-if (assertEquals(result3, expected3, "Test sans conversion")) {
-    testsPassés++;
-}
+TestRunner.prototype.testDictionnaire = function() {
+    const expectedKeys = ['coeur', 'amour', 'chat', 'chien', 'soleil', 'lune', 'eau', 'feu', 'terre'];
+    const actualKeys = Object.keys(wordToEmoji);
 
-// Test 4: Sensibilité à la casse
-testsTotal += 2;
-const test4a = "J'aime le SOLEIL";
-const result4a = convertTextToEmoji(test4a);
-const expected4a = "J'aime le ☀️";
+    this.assertEquals(
+        actualKeys.length,
+        expectedKeys.length,
+        "Nombre de mots dans le dictionnaire"
+    );
 
-const test4b = "Mon Chien est gentil";
-const result4b = convertTextToEmoji(test4b);
-const expected4b = "Mon 🐶 est gentil";
+    this.assertEquals(wordToEmoji.chat, '🐱', "Emoji chat");
+    this.assertEquals(wordToEmoji.soleil, '☀️', "Emoji soleil");
+    this.assertEquals(wordToEmoji.coeur, '❤️', "Emoji coeur");
+};
 
-if (assertEquals(result4a, expected4a, "Test casse majuscule")) {
-    testsPassés++;
-}
-
-if (assertEquals(result4b, expected4b, "Test casse mixte")) {
-    testsPassés++;
-}
-
-// Test 5: Mots partiels (ne doivent pas être convertis)
-testsTotal++;
-const test5 = "J'ai du courage dans le coeur";
-const result5 = convertTextToEmoji(test5);
-const expected5 = "J'ai du courage dans le ❤️";
-
-if (assertEquals(result5, expected5, "Test mots partiels")) {
-    testsPassés++;
-}
-
-// Test 6: Tous les emojis du dictionnaire
-testsTotal++;
-const test6 = "coeur amour chat chien soleil lune eau feu terre";
-const result6 = convertTextToEmoji(test6);
-const expected6 = "❤️ 💕 🐱 🐶 ☀️ 🌙 💧 🔥 🌍";
-
-if (assertEquals(result6, expected6, "Test tous les emojis")) {
-    testsPassés++;
-}
-
-// Test 7: Dictionnaire (vérification structure)
-testsTotal += 3;
-
-const expectedKeys = ['coeur', 'amour', 'chat', 'chien', 'soleil', 'lune', 'eau', 'feu', 'terre'];
-const actualKeys = Object.keys(wordToEmoji);
-
-if (assertEquals(actualKeys.length, expectedKeys.length, "Nombre de mots")) {
-    testsPassés++;
-}
-
-// Vérification des emojis spécifiques
-if (assertEquals(wordToEmoji.chat, '🐱', "Emoji chat")) {
-    testsPassés++;
-}
-
-if (assertEquals(wordToEmoji.soleil, '☀️', "Emoji soleil")) {
-    testsPassés++;
-}
-
-// Test 8: Histoire complète avec vérifications
-testsTotal += 4;
-const histoire = `Il était une fois un aventurier qui aimait son chien fidèle. 
+TestRunner.prototype.testHistoireComplete = function() {
+    const histoire = `Il était une fois un aventurier qui aimait son chien fidèle. 
 Sous le soleil brillant, ils exploraient des terres mystérieuses. 
 Quand la lune se levait, ils allumaient un feu près de l'eau cristalline. 
 Son coeur était rempli d'amour pour cette terre sauvage.`;
 
-const histoireResult = convertTextToEmoji(histoire);
+    const histoireResult = convertTextToEmoji(histoire);
 
-// Vérifications spécifiques
-if (assertContains(histoireResult, '🐶', "Chien présent")) {
-    testsPassés++;
-}
-if (assertContains(histoireResult, '☀️', "Soleil présent")) {
-    testsPassés++;
-}
-if (assertContains(histoireResult, '🌙', "Lune présente")) {
-    testsPassés++;
-}
-if (assertContains(histoireResult, '❤️', "Coeur présent")) {
-    testsPassés++;
+    this.assertContains(histoireResult, '🐶', "Chien présent dans l'histoire");
+    this.assertContains(histoireResult, '☀️', "Soleil présent dans l'histoire");
+    this.assertContains(histoireResult, '🌙', "Lune présente dans l'histoire");
+    this.assertContains(histoireResult, '❤️', "Coeur présent dans l'histoire");
+};
+
+TestRunner.prototype.testGestionErreurs = function() {
+    this.assertThrows(
+        () => convertTextToEmoji(null),
+        "Erreur avec valeur null"
+    );
+
+    this.assertThrows(
+        () => convertTextToEmoji(undefined),
+        "Erreur avec valeur undefined"
+    );
+
+    this.assertThrows(
+        () => convertTextToEmoji(123),
+        "Erreur avec nombre"
+    );
+};
+
+TestRunner.prototype.testClasseEmojiConverter = function() {
+    const converter = new EmojiConverter();
+    
+    this.assertEquals(
+        converter.convert("J'aime mon chat"),
+        "J'aime mon 🐱",
+        "Conversion avec instance de classe"
+    );
+
+    converter.addWord("test", "🧪");
+    this.assertEquals(
+        converter.convert("Un test"),
+        "Un 🧪",
+        "Ajout de nouveau mot"
+    );
+
+    converter.removeWord("test");
+    this.assertEquals(
+        converter.convert("Un test"),
+        "Un test",
+        "Suppression de mot"
+    );
+
+    const customConverter = new EmojiConverter({ "hello": "👋" });
+    this.assertEquals(
+        customConverter.convert("hello world"),
+        "👋 world",
+        "Dictionnaire personnalisé"
+    );
+};
+
+const testRunner = new TestRunner();
+
+if (require.main === module) {
+    testRunner.runAllTests();
 }
 
-// Résumé des tests
-console.log('=== RÉSUMÉ DES TESTS ===');
-console.log(`Tests réussis: ${testsPassés}/${testsTotal}`);
-
-if (testsPassés === testsTotal) {
-    console.log('🎉 TOUS LES TESTS SONT RÉUSSIS ! 🎉');
-} else {
-    console.log('⚠️  Certains tests ont échoué. Vérifie le code.');
-}
-
-// Export pour les tests automatisés
 module.exports = {
-    testsPassés,
-    testsTotal,
-    allTestsPassed: testsPassés === testsTotal
+    get testsPassés() { return testRunner.testsPassés; },
+    get testsTotal() { return testRunner.testsTotal; },
+    get allTestsPassed() { return testRunner.testsPassés === testRunner.testsTotal; },
+    TestRunner
 };
