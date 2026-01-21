@@ -42,3 +42,13 @@ build/
 Thumbs.db
 
 correction/
+
+
+exercices/docker-exercice-4-dockerfile/node_modules
+exercices/docker-exercice-4-dockerfile/package-lock.json
+
+exercices/docker-exercice-5-docker-compose/node_modules
+exercices/docker-exercice-5-docker-compose/package-lock.json
+
+cours/docker-exemple-volumes/node_modules
+cours/docker-exemple-volumes/package-lock.json

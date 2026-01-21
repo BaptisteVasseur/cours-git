@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # Version SANS volumes (pour comparaison)
+  app-sans-volumes:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    container_name: demo-sans-volumes
+    # Aucun volume - tout est dans l'image
+
+  # Version AVEC volumes (recommandée pour le développement)
+  app-avec-volumes:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    container_name: demo-avec-volumes
+    volumes:
+      # Monte le code source (synchronisation en temps réel)
+      - .:/app
+      # Exclut node_modules pour éviter les conflits
+      - /app/node_modules
+      # Volume nommé pour les données (persistance)
+      - app-data:/app/data
+      # Volume nommé pour les logs (persistance)
+      - app-logs:/app/logs
+    environment:
+      - NODE_ENV=development
+
+# Déclaration des volumes nommés
+volumes:
+  app-data:
+    driver: local
+  app-logs:
+    driver: local

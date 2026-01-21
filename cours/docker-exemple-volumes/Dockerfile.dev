@@ -1,0 +1,20 @@
+# Dockerfile AVEC volumes (pour le développement)
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie seulement package.json pour installer les dépendances
+COPY package*.json ./
+RUN npm install
+
+# Installe nodemon globalement pour le développement
+RUN npm install -g nodemon
+
+EXPOSE 3000
+
+# Le code sera monté via un volume, pas copié!
+# Les dossiers data/ et logs/ seront aussi des volumes
+CMD ["nodemon", "app.js"]
+
+# AVANTAGE: Le code est synchronisé en temps réel
+# Les données persistent entre les redémarrages
