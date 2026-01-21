@@ -583,6 +583,205 @@ docker history emoji-converter:latest
 docker images emoji-converter
 ```
 
+## Volumes Docker : Développement vs Production
+
+### Le problème du COPY en développement
+
+Quand tu développes une application, utiliser seulement `COPY` dans ton Dockerfile pose des problèmes :
+
+#### Workflow sans volumes (problématique)
+```
+1. Modifie ton code
+2. Rebuild l'image Docker (lent !)
+3. Redémarre le container
+4. Teste tes changements
+5. Répète...
+```
+
+#### Workflow avec volumes (efficace)
+```
+1. Modifie ton code
+2. Tes changements sont visibles instantanément !
+3. Teste directement
+```
+
+### Comprendre les types de volumes
+
+#### 1. Bind Mounts (synchronisation du code)
+```yaml
+volumes:
+  - .:/app  # Monte le dossier courant dans /app du container
+```
+
+**Utilité :** Synchronise ton code local avec le container en temps réel.
+
+#### 2. Volumes anonymes (exclusion de dossiers)
+```yaml
+volumes:
+  - /app/node_modules  # Exclut node_modules du bind mount
+```
+
+**Utilité :** Évite les conflits entre les dépendances locales et celles du container.
+
+#### 3. Volumes nommés (persistance des données)
+```yaml
+volumes:
+  - app-data:/app/data  # Volume persistant pour les données
+```
+
+**Utilité :** Conserve les données même quand le container est supprimé.
+
+### Exemple pratique avec Docker Compose
+
+#### Configuration de développement
+```yaml
+version: '3.8'
+
+services:
+  app-dev:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Code source synchronisé
+      - .:/app
+      # Exclut node_modules (évite les conflits)
+      - /app/node_modules
+      # Données persistantes
+      - app-data:/app/data
+      # Logs persistants
+      - app-logs:/app/logs
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  app-data:    # Volume pour les données
+  app-logs:    # Volume pour les logs
+```
+
+#### Configuration de production
+```yaml
+version: '3.8'
+
+services:
+  app-prod:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Seulement les données (pas le code !)
+      - app-data:/app/data
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  app-data:
+```
+
+### Comparaison : COPY vs Volumes
+
+| Aspect | COPY (Production) | Volumes (Développement) |
+|--------|------------------|------------------------|
+| **Changements code** | Rebuild nécessaire | Instantané |
+| **Persistance données** | ❌ Perdues au rebuild | ✅ Conservées |
+| **Sécurité** | ✅ Code dans l'image | ⚠️ Code externe |
+| **Performance** | ✅ Rapide | Légèrement plus lent |
+| **Reproductibilité** | ✅ Identique partout | ⚠️ Dépend de l'environnement |
+
+### Commandes utiles pour les volumes
+
+```bash
+# Lister tous les volumes
+docker volume ls
+
+# Inspecter un volume
+docker volume inspect mon-volume
+
+# Supprimer un volume
+docker volume rm mon-volume
+
+# Supprimer tous les volumes non utilisés
+docker volume prune
+
+# Voir l'espace utilisé par les volumes
+docker system df
+```
+
+### Dockerfile adapté au développement
+
+#### Dockerfile.dev (avec volumes)
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie seulement package.json pour le cache
+COPY package*.json ./
+RUN npm install
+
+# Le code sera monté via un volume
+# Pas besoin de COPY . .
+
+EXPOSE 3000
+
+# Utilise nodemon pour le rechargement automatique
+CMD ["npx", "nodemon", "app.js"]
+```
+
+#### Dockerfile (production)
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie et installe les dépendances
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copie tout le code dans l'image
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "app.js"]
+```
+
+### Bonnes pratiques
+
+#### En développement
+- ✅ Utilise des bind mounts pour le code
+- ✅ Exclut `node_modules` avec un volume anonyme
+- ✅ Persiste les données avec des volumes nommés
+- ✅ Utilise `nodemon` pour le rechargement automatique
+
+#### En production
+- ✅ Utilise `COPY` pour inclure le code dans l'image
+- ✅ Persiste seulement les données nécessaires
+- ✅ Évite les bind mounts (sécurité)
+- ✅ Utilise des images optimisées et sécurisées
+
+### Problèmes courants et solutions
+
+#### "node_modules not found"
+```yaml
+# Solution : Volume anonyme pour exclure node_modules
+volumes:
+  - .:/app
+  - /app/node_modules  # Priorité sur le bind mount
+```
+
+#### "Permission denied"
+```dockerfile
+# Solution : Utilise l'utilisateur node
+USER node
+```
+
+#### "Changes not reflected"
+```yaml
+# Solution : Vérifie le bind mount
+volumes:
+  - .:/app  # Dossier courant vers /app dans le container
+```
 
 ## Questions souvent posées par les recruteurs
 

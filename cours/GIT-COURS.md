@@ -441,4 +441,3 @@ Configure l'automatisation :
 2. **Hooks pre-commit** : Configure un hook qui vérifie la syntaxe et lance les tests
 3. **CI/CD simulation** : Crée un script `deploy.sh` qui simule le déploiement du convertisseur
 4. **Versioning** : Utilise les tags Git pour versionner ton outil emoji
-
