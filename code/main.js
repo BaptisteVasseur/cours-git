@@ -26,7 +26,7 @@ class EmojiConverter {
     _escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
-
+    
     convert(text) {
         if (typeof text !== 'string') {
             throw new Error('Le texte doit être une chaîne de caractères');
@@ -68,7 +68,7 @@ function createInteractiveTest() {
 
     rl.question('Entrez votre texte : ', (answer) => {
         try {
-            console.log('Résultat :', convertTextToEmoji(answer));
+        console.log('Résultat :', convertTextToEmoji(answer));
         } catch (error) {
             console.error('Erreur :', error.message);
         }
