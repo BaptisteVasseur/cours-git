@@ -9,30 +9,30 @@ class TestRunner {
 
     assertEquals(actual, expected, testName) {
         this.testsTotal++;
-        if (actual === expected) {
-            console.log(`✅ ${testName} : RÉUSSI`);
+    if (actual === expected) {
+        console.log(`✅ ${testName} : RÉUSSI`);
             this.testsPassés++;
-            return true;
-        } else {
-            console.log(`❌ ${testName} : ÉCHEC`);
-            console.log(`   Attendu: "${expected}"`);
-            console.log(`   Obtenu:  "${actual}"`);
-            return false;
-        }
+        return true;
+    } else {
+        console.log(`❌ ${testName} : ÉCHEC`);
+        console.log(`   Attendu: "${expected}"`);
+        console.log(`   Obtenu:  "${actual}"`);
+        return false;
     }
+}
 
     assertContains(text, word, testName) {
         this.testsTotal++;
-        if (text.includes(word)) {
-            console.log(`✅ ${testName} : RÉUSSI`);
+    if (text.includes(word)) {
+        console.log(`✅ ${testName} : RÉUSSI`);
             this.testsPassés++;
-            return true;
-        } else {
-            console.log(`❌ ${testName} : ÉCHEC`);
-            console.log(`   Le texte "${text}" ne contient pas "${word}"`);
-            return false;
-        }
+        return true;
+    } else {
+        console.log(`❌ ${testName} : ÉCHEC`);
+        console.log(`   Le texte "${text}" ne contient pas "${word}"`);
+        return false;
     }
+}
 
     assertThrows(fn, testName) {
         this.testsTotal++;
@@ -124,8 +124,8 @@ TestRunner.prototype.testCasseSensitive = function() {
 };
 
 TestRunner.prototype.testDictionnaire = function() {
-    const expectedKeys = ['coeur', 'amour', 'chat', 'chien', 'soleil', 'lune', 'eau', 'feu', 'terre'];
-    const actualKeys = Object.keys(wordToEmoji);
+const expectedKeys = ['coeur', 'amour', 'chat', 'chien', 'soleil', 'lune', 'eau', 'feu', 'terre'];
+const actualKeys = Object.keys(wordToEmoji);
 
     this.assertEquals(
         actualKeys.length,
@@ -139,12 +139,12 @@ TestRunner.prototype.testDictionnaire = function() {
 };
 
 TestRunner.prototype.testHistoireComplete = function() {
-    const histoire = `Il était une fois un aventurier qui aimait son chien fidèle. 
+const histoire = `Il était une fois un aventurier qui aimait son chien fidèle. 
 Sous le soleil brillant, ils exploraient des terres mystérieuses. 
 Quand la lune se levait, ils allumaient un feu près de l'eau cristalline. 
 Son coeur était rempli d'amour pour cette terre sauvage.`;
 
-    const histoireResult = convertTextToEmoji(histoire);
+const histoireResult = convertTextToEmoji(histoire);
 
     this.assertContains(histoireResult, '🐶', "Chien présent dans l'histoire");
     this.assertContains(histoireResult, '☀️', "Soleil présent dans l'histoire");
